@@ -1,0 +1,50 @@
+{% extends "views/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Product Image Section -->
+        <div class="col-md-6">
+            <div class="product-image">
+                <img id="product-image" class="img-fluid rounded" alt="Product Image"
+                    style="width: 360px; height: 360px; object-fit: cover;">
+            </div>
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="col-md-6">
+            <h2 id="product-title">Product Name</h2>
+            <p id="product-description">Product Description</p>
+            <h3 id="product-price">$0.00</h3>
+            <div id="product-rating" class="mb-2"></div>
+            <button class="btn btn-primary mt-3" onclick="window.location.href = '/payment'">Buy Now</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = () => {
+        const selectedProduct = JSON.parse(localStorage.getItem('selectedProduct'));
+
+        if (selectedProduct) {
+            document.getElementById('product-image').src = selectedProduct.image || '/static/images/fallback.jpg';
+            document.getElementById('product-title').textContent = selectedProduct.name;
+            document.getElementById('product-description').textContent = selectedProduct.description;
+            document.getElementById('product-price').textContent = `$${selectedProduct.price}`;
+
+            // Generate rating stars
+            const ratingContainer = document.getElementById('product-rating');
+            const filledStars = Math.round(selectedProduct.rating || 0);
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('i');
+                star.className = i < filledStars ? 'fas fa-star filled' : 'fas fa-star';
+                ratingContainer.appendChild(star);
+            }
+            ratingContainer.insertAdjacentHTML('beforeend', ` (${selectedProduct.reviewCount} reviews)`);
+        } else {
+            alert('No product selected. Please select a product from the product listing.');
+            window.location.href = '/';
+        }
+    };
+</script>
+{% endblock %}

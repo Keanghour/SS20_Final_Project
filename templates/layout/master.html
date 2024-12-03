@@ -1,0 +1,31 @@
+<!-- templates/layout/master.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AdminLTE 3 | Starter</title>
+
+    {% include 'layout/header_style.html' %}
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    {% include 'partials/navbar.html' %}
+    <!-- Sidebar -->
+    {% include 'partials/sidebar.html' %}
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+    <!-- Footer -->
+    {% include 'partials/footer.html' %}
+</div>
+
+{% include 'layout/footer_script.html' %}
+
+{% block script %}{% endblock %}
+</body>
+</html>

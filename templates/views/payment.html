@@ -1,0 +1,151 @@
+<!-- templates/views/payment.html -->
+
+{% extends "views/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-7">
+            <h3>Product Information</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Product details will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-5">
+            <h3>Customer Information</h3>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" placeholder="Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    <input type="text" class="form-control" id="phone_number" placeholder="(123) 456-7890" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" placeholder="hour.doe@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea class="form-control" id="address" rows="3" placeholder="123 Main Street, City, State, ZIP" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Checkout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Your payment was successful! You will be redirected to the homepage.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="window.location.href = '/homepage'">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = () => {
+        const selectedProduct = JSON.parse(localStorage.getItem('selectedProduct'));
+
+        if (selectedProduct) {
+            const productTableBody = document.getElementById('product-table-body');
+            const productRow = `
+                <tr>
+                    <td>1</td>
+                    <td>${selectedProduct.name}</td>
+                    <td>$${selectedProduct.price}</td>
+                    <td>1</td>
+                    <td>$${selectedProduct.price}</td>
+                </tr>
+            `;
+            productTableBody.innerHTML = productRow;
+        } else {
+            alert('No product selected. Please go back and select a product.');
+            window.location.href = '/';
+        }
+    };
+
+    document.getElementById('checkout-form').addEventListener('submit', function (event) {
+        event.preventDefault(); // Prevents the form from submitting traditionally
+
+        // Get form data
+        const name = document.getElementById('name').value;
+        const phone_number = document.getElementById('phone_number').value;
+        const email = document.getElementById('email').value;
+        const address = document.getElementById('address').value;
+
+        // Get product details from localStorage
+        const selectedProduct = JSON.parse(localStorage.getItem('selectedProduct'));
+
+        if (!selectedProduct) {
+            alert('No product selected. Please select a product and try again.');
+            return;
+        }
+
+        // Assuming you are only adding one product, but this can be adjusted for multiple products if needed.
+        const productName = selectedProduct.name;
+        const productPrice = parseFloat(selectedProduct.price);
+        const productQuantity = 1;  // Assume 1 for now, adjust if you have a quantity selector
+        const totalPrice = productPrice * productQuantity;
+
+        // Prepare the data to send to the server
+        const formData = {
+            name: name,
+            phone_number: phone_number,
+            email: email,
+            address: address,
+            productName: productName,
+            productPrice: productPrice,
+            productQuantity: productQuantity,
+            totalPrice: totalPrice
+        };
+
+        // Send data to server using fetch API
+        fetch('/send-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // On success, show the success modal
+            $('#successModal').modal('show');
+
+            // Redirect after a short delay to ensure the user sees the success message
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 3000); // Adjust the delay as needed (e.g., 3000 ms = 3 seconds)
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+</script>
+{% endblock %}

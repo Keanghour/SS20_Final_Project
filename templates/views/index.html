@@ -1,0 +1,55 @@
+{% extends "views/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Products</h2>
+    <div class="row" id="product-container"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    async function loadProducts() {
+        try {
+            // Fetching product data
+            const response = await axios.get('/getProducts');
+            const products = response.data.data; // Assuming API returns a 'data' array with product objects
+            const productContainer = document.getElementById('product-container');
+
+            // Creating product cards dynamically
+            products.forEach((product, index) => {
+                const productCard = `
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <img src="${product.image || '/static/images/fallback.jpg'}" class="card-img-top" alt="${product.name}">
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text">${product.description.slice(0, 60)}...</p>
+                                <h4 class="card-text">$${product.price}</h4>
+                                <button class="btn btn-primary" onclick="viewProductDetails(${index})">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                productContainer.innerHTML += productCard;
+            });
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            alert('Failed to load products');
+        }
+    }
+
+    // Function to store product details in local storage and redirect to the product view page
+    function viewProductDetails(productIndex) {
+        const products = JSON.parse(localStorage.getItem('products'));
+        localStorage.setItem('selectedProduct', JSON.stringify(products[productIndex]));
+        window.location.href = '/productview';
+    }
+
+    window.onload = async () => {
+        // Fetch products and store in local storage
+        const response = await axios.get('/getProducts');
+        localStorage.setItem('products', JSON.stringify(response.data.data));
+        loadProducts();
+    };
+</script>
+{% endblock %}

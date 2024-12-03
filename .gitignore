@@ -1,0 +1,14 @@
+# .gitignore for your Flask project
+
+# Python bytecode files
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Ignore environment variables file (.env)
+.env
+
+# Ignore uploaded images directory
+static/uploaded_images/

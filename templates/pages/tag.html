@@ -1,0 +1,213 @@
+{% extends 'layout/master.html' %}
+
+{% block content %}
+<div id="app">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Tag Page</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item active">Tag Page</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <button @click="addTag" class="btn btn-outline-primary">
+                                <i class="fas fa-plus-circle"></i> Add Tag
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-borderless table-striped">
+                                    <thead>
+                                        <tr class="bg-primary">
+                                            <th>No.</th>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(tag, index) in tag_list" :key="'tag_'+index">
+                                            <td>[[ index + 1 ]]</td>
+                                            <td>[[ tag.name ]]</td>
+                                            <td>[[ tag.description ]]</td>
+                                            <td>
+                                                <button @click="editTag(tag)" class="btn btn-sm btn-outline-secondary mr-2">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button @click="deleteTag(tag.id)" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Tag Form -->
+    <div class="modal fade" id="popup_modal" tabindex="-1" aria-labelledby="popupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="popupModalLabel">Tag Form</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="tagName">Name</label>
+                            <input type="text" class="form-control" id="tagName" v-model="form.name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tagDescription">Description</label>
+                            <textarea class="form-control" id="tagDescription" v-model="form.description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+                    <button v-if="status === 'add'" @click="saveTag" type="button" class="btn btn-outline-primary">Save</button>
+                    <button v-if="status === 'update'" @click="updateTag" type="button" class="btn btn-outline-primary">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block script %}
+<script>
+    (function() {
+        const { createApp } = Vue;
+        const app = createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    tag_list: [],
+                    form: {
+                        id: null,
+                        name: '',
+                        description: ''
+                    },
+                    status: 'add'
+                };
+            },
+            created() {
+                this.fetchTags();
+            },
+            methods: {
+                async fetchTags() {
+                    $.LoadingOverlay("show"); // Show loading overlay
+                    try {
+                        const response = await fetch('/getTags');
+                        const data = await response.json();
+                        this.tag_list = data.data;
+                    } catch (error) {
+                        console.error('Error fetching tags:', error);
+                    } finally {
+                        $.LoadingOverlay("hide"); // Hide loading overlay
+                    }
+                },
+                addTag() {
+                    this.form = {
+                        id: null,
+                        name: '',
+                        description: ''
+                    };
+                    this.status = 'add';
+                    $('#popup_modal').modal('show');
+                },
+                async editTag(tag) {
+                    this.form = {
+                        ...tag
+                    };
+                    this.status = 'update';
+                    $('#popup_modal').modal('show');
+                },
+                async deleteTag(id) {
+                    if (confirm("Are you sure you want to delete this tag?")) {
+                        $.LoadingOverlay("show"); // Show loading overlay
+                        try {
+                            await fetch(`/deleteTag/${id}`, {
+                                method: 'DELETE'
+                            });
+                            this.fetchTags();
+                        } catch (error) {
+                            console.error('Error deleting tag:', error);
+                        } finally {
+                            $.LoadingOverlay("hide"); // Hide loading overlay
+                        }
+                    }
+                },
+                async saveTag() {
+                    $.LoadingOverlay("show"); // Show loading overlay
+                    try {
+                        await fetch('/addTag', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.form)
+                        });
+                        this.fetchTags();
+                        this.clearForm();
+                    } catch (error) {
+                        console.error('Error saving tag:', error);
+                    } finally {
+                        $.LoadingOverlay("hide"); // Hide loading overlay
+                    }
+                },
+                async updateTag() {
+                    $.LoadingOverlay("show"); // Show loading overlay
+                    try {
+                        await fetch(`/updateTag/${this.form.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.form)
+                        });
+                        this.fetchTags();
+                        this.clearForm();
+                    } catch (error) {
+                        console.error('Error updating tag:', error);
+                    } finally {
+                        $.LoadingOverlay("hide"); // Hide loading overlay
+                    }
+                },
+                clearForm() {
+                    this.form = {
+                        id: null,
+                        name: '',
+                        description: ''
+                    };
+                    $('#popup_modal').modal('hide');
+                }
+            }
+        });
+
+        app.mount('#app');
+    })();
+</script>
+{% endblock %}
+{% endblock %}
